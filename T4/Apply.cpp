@@ -48,7 +48,7 @@ auto apply( T array, F func) -> vector<decltype(func(array[0]))>{
 }
 
 template <typename T, typename F>
-vector<string> apply( initializer_list<T> array, F func) {
+vector<invoke_result_t<F,T>> apply( initializer_list<T> array, F func) {
 	vector<invoke_result_t<F,T>> r;
 	for (auto e : array){
 		r.push_back(func(e));
@@ -57,9 +57,20 @@ vector<string> apply( initializer_list<T> array, F func) {
 	return r;
 }
 
+template <typename T, typename F>
+vector<invoke_result_t<F,T>> apply( int* array, F func) {
+	vector<int> a{array};
+	vector<invoke_result_t<F,T>> r;
+	for (auto e : a){
+		r.push_back(func(e));
+	}
+	
+	return r;
+}
+
 int main( int argc, char* argv[]) {
 	     
-	vector<int> v{ 1, 2, 3, 4, 5 };
+	int v[] = { 1, 2, 3, 4, 5 };
 	vector<int> r = ::apply( v, id );
 	cout << r;
 }
