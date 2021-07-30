@@ -10,6 +10,8 @@ public:
   template <typename A, typename B>
   Pair( A a, B b ) {
 	  cout << a << b << endl;
+	  p = new AbstractPair<A,B>(a,b);
+	  
     
   }
 private:
@@ -23,6 +25,10 @@ struct AbstractPair : public Pair {
 		cout << a << b << endl;
 		
 	}
+	
+	A a;
+	B b;
+	
 	
 	
 };
