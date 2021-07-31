@@ -35,10 +35,8 @@ ostream& operator << ( ostream& o, const vector<T>& v ) {
     return o << "]";
 }
 
-using namespace std;
-
-template <typename T, typename F>
-auto apply( T array, F func) -> vector<decltype(func(array[0]))>{
+template <typename F, int N>
+auto apply( int (&array)[N], F func){
 	vector<decltype(func(array[0]))> r;
 	for (auto e : array){
 		r.push_back(func(e));
@@ -46,6 +44,18 @@ auto apply( T array, F func) -> vector<decltype(func(array[0]))>{
 	
 	return r;
 }
+
+template <typename T, typename F>
+auto apply( T array, F func){
+	vector<decltype(func(array[0]))> r;
+	for (auto e : array){
+		r.push_back(func(e));
+	}
+	
+	return r;
+}
+
+
 
 template <typename T, typename F>
 vector<invoke_result_t<F,T>> apply( initializer_list<T> array, F func) {
@@ -57,20 +67,17 @@ vector<invoke_result_t<F,T>> apply( initializer_list<T> array, F func) {
 	return r;
 }
 
-template <typename T, typename F>
-vector<invoke_result_t<F,T>> apply( int* array, F func) {
-	vector<int> a{array};
-	vector<invoke_result_t<F,T>> r;
-	for (auto e : a){
-		r.push_back(func(e));
-	}
-	
-	return r;
-}
+
+
+
 
 int main( int argc, char* argv[]) {
 	     
 	int v[] = { 1, 2, 3, 4, 5 };
 	vector<int> r = ::apply( v, id );
-	cout << r;
+	cout << ::apply( vector{ 1, 2, 3 }, FunctorSimples() );
+	cout << ::apply( vector{ 1, 2, 3 }, FunctorTemplate() ) << ::apply( vector<string>{ "a", "b", "c" }, FunctorTemplate() );
+
+	
+	return 0;
 }
