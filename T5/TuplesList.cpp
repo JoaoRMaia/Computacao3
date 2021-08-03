@@ -5,6 +5,10 @@ using namespace std;
 
 struct AbstractPair;
 
+struct ImplrPair{
+	
+}
+
 class Pair {
 public:
   template <typename A, typename B>
