@@ -1,5 +1,6 @@
 #include <initializer_list>
 #include <iostream>
+#include <memory>
 
 using namespace std;
 
@@ -24,11 +25,11 @@ private:
 struct Pair {
   template <typename A, typename B>
   Pair( A a, B b ) {
-	  p = new ImplPair<A,B>(a,b);
+	  p = shared_ptr<ImplPair<A,B>>(a,b);
 	  
   }
   
-  AbstractPair *p;
+  shared_ptr<AbstractPair> p;
 };
 
 
