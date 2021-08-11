@@ -5,24 +5,33 @@ using namespace std;
 
 template<int n, typename T>
 struct Vetor {
+	struct MeioOp{
+		MeioOp( Vetor* v ): u(v) {}
+		
+		MeioOp operator , ( T a ){
+			*u = n;
+			return *this;
+		}
+		Vetor 
+		
+	};
+	
+	Vetor(){
+	}
 	Vetor(initializer_list<T> v){
-		int num = v.size();
-		if (num--) x = *(v.begin());
-		if (num--) y = *(v.begin()+1); 
-		if (num--) z = *(v.begin()+2);
 		
 		
 	}
-	void operator =(initializer_list<T> v) {
-		int num = v.size();
-		if (num--) x = *(v.begin());
-		if (num--) y = *(v.begin()+1); 
-		if (num--) z = *(v.begin()+2);
+	void operator =( initializer_list<T> v ) {
 		
 	}
+	
+	MeioOp operator = ( T a ) {
+		u.push_back(a);
+		return MeioOp(this);
+	}
 		
-	T x,y,z;
-	int dim = n;
+	vector<T> u;
 	
 
 	
@@ -50,7 +59,7 @@ int main () {
 	
 	Vetor <2,int> a;
 	Vetor<2,double> v;
-	//v = 4.5, 6.1;
+	v = 4.5, 6.1;
 	return 0;
 }
 
