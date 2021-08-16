@@ -5,12 +5,14 @@
 using namespace std;
 
 struct AbstractPair {
+    AbstractPair() {}
 	virtual void print( ostream& o ){}
 };
 
 template <typename A, typename B>
 struct ImplPair : AbstractPair {
-	ImplPair(A a, B b) : a(a), b(b) {}
+    ImplPair(){}
+	ImplPair(A& a, B& b) : a(a), b(b) {}
 
 	void print( ostream& o ) {
 		o << a << " = " << b << endl;
@@ -26,19 +28,20 @@ private:
 struct Pair {
   template <typename A, typename B>
   Pair( A a, B b ){
-	  p = shared_ptr<AbstractPair>{new ImplPair<A,B>(a,b)};
+	  p = shared_ptr<AbstractPair>{ new ImplPair<A,B>(a,b)};
   }
   shared_ptr<AbstractPair> p;
 };
 
 
 void print( ostream& o, initializer_list<Pair> lista ) {
-	for (auto e : lista){
+	for (auto& e : lista){
 		e.p->print(o);
 	}
 }
 
 #ifdef NDEBUG
+
 
 class Leak {
     public:
@@ -62,8 +65,9 @@ class Leak {
         int n;
 };
 
-void operator <<( ostream& o, Leak l ) {
+ostream& operator <<( ostream& o, Leak l ) {
     o << "lk(" << l.n << ")";
+    return o;
 }
 
 int Leak::contador = 0;
