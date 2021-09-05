@@ -116,9 +116,7 @@ auto operator + (F1 f1, F2 f2) {
     else if constexpr (is_integral_v<F2> || is_floating_point_v<F2>) return Soma<F1, Cte>(f1, f2);
     else return Soma<F1, F2>(f1, f2);
 }
-
-// Subt
-// Sub
+//Subt
 
 template <typename F1, typename F2>
 class Subtrai {
@@ -215,7 +213,7 @@ auto operator ->*(T v, Int n) {
     if constexpr (is_same_v<Int, int>) {
         return Expoente<T, Cte>(v, Cte(n));
     }
-    else static_assert("Operador de potenciação definido apenas para inteiros");
+    else static_assert(is_same_v<Int, int>,"Operador de potenciação definido apenas para inteiros");
 }
 
 /* Recursivo
@@ -252,6 +250,29 @@ template <typename T>
 Exp<T> exp(T v) {
     return Exp<T>(v);
 }
+// log
+
+template <typename T>
+class Log {
+public:
+    Log(T f1) : f1(f1) {}
+
+    double e(double v) {
+        return log(f1.e(v));
+    }
+
+    double dx(double v) {
+        return 1/f1.e(v) * f1.dx(v);
+    }
+
+private:
+    T f1;
+};
+
+template <typename T>
+Log<T> log(T v) {
+    return Log<T>(v);
+}
 
 
 
@@ -265,16 +286,19 @@ Cte c;
 
 int main() {
     c = Cte(3);
-
     auto f1 = 3.0 * x * x;
     auto f2 = x * x * (x + 8.0) + x;
     auto f3 = sin(x * x * cos(3.14 * x + 1.0));
     auto f4 = sin(x * x - cos(3.14 * x + 1.0));
     auto f5 = sin(x) / cos(x);
     auto f6 = x->*3 + x->*2;
-    double v = 0.1;
     auto f8 = 1 / (1 + exp(-2 * (x - 1)->*4));
-    cout << f8.e(v)  << " " << f8.dx(v) << endl;
+    auto f9 = exp(x * log(x));
+    double v = 3;
+    auto f10 = x->*1.1;
+
+    cout << f9.e(v) << " " << f9.dx(v) << endl;
+
 
     return 0;
 }
