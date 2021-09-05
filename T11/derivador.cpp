@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cmath>
+#include <type_traits>
 
 using namespace std;
 
@@ -54,18 +55,10 @@ private:
 
 
 template <typename F1, typename F2>
-Multiplica<F1, F2> operator * (F1 f1, F2 f2) {
-    return Multiplica<F1, F2>(f1, f2);
-}
-
-template <typename F2>
-Multiplica<Cte, F2> operator * (double n, F2 f2) {
-    return Multiplica<Cte, F2>(n, f2);
-}
-
-template <typename F1>
-Multiplica<F1, Cte> operator * (F1 f1, double n) {
-    return Multiplica<F1, Cte>(f1, n);
+auto operator * (F1 f1, F2 f2) {
+    if constexpr (is_integral_v<F1> || is_floating_point_v<F1>) return Multiplica<Cte, F2>(f1, f2);
+    else if constexpr (is_integral_v<F2> || is_floating_point_v<F2>) return Multiplica<F1, Cte>(f1, f2);
+    else return Multiplica<F1, F2>(f1, f2);
 }
 
 
@@ -89,23 +82,12 @@ private:
     F2 f2;
 };
 
-
 template <typename F1, typename F2>
-Divide<F1, F2> operator / (F1 f1, F2 f2) {
-    return Divide<F1, F2>(f1, f2);
+auto operator / (F1 f1, F2 f2) {
+    if constexpr (is_integral_v<F1> || is_floating_point_v<F1>) return Divide<Cte, F2>(f1, f2);
+    else if constexpr (is_integral_v<F2> || is_floating_point_v<F2>) return Divide<F1, Cte>(f1, f2);
+    else return Divide<F1, F2>(f1, f2);
 }
-
-template <typename F2>
-Divide<Cte, F2> operator / (double n, F2 f2) {
-    return Divide<Cte, F2>(n, f2);
-}
-
-template <typename F1>
-Divide<F1, Cte> operator / (F1 f1, double n) {
-    return Divide<F1, Cte>(f1, n);
-}
-
-
 
 // Soma
 
@@ -129,19 +111,12 @@ private:
 
 
 template <typename F1, typename F2>
-Soma<F1, F2> operator + (F1 f1, F2 f2) {
-    return Soma<F1, F2>(f1, f2);
+auto operator + (F1 f1, F2 f2) {
+    if constexpr (is_integral_v<F1> || is_floating_point_v<F1>) return Soma<Cte, F2>(f1, f2);
+    else if constexpr (is_integral_v<F2> || is_floating_point_v<F2>) return Soma<F1, Cte>(f1, f2);
+    else return Soma<F1, F2>(f1, f2);
 }
 
-template <typename F2>
-Soma<Cte, F2> operator + (double n, F2 f2) {
-    return Soma<Cte, F2>(n, f2);
-}
-
-template <typename F1>
-Soma<F1, Cte> operator + (F1 f1, double n) {
-    return Soma<F1, Cte>(f1, n);
-}
 // Subt
 // Sub
 
@@ -165,18 +140,10 @@ private:
 
 
 template <typename F1, typename F2>
-Subtrai<F1, F2> operator - (F1 f1, F2 f2) {
-    return Subtrai<F1, F2>(f1, f2);
-}
-
-template <typename F2>
-Subtrai<Cte, F2> operator - (double n, F2 f2) {
-    return Subtrai<Cte, F2>(n, f2);
-}
-
-template <typename F1>
-Subtrai<F1, Cte> operator - (F1 f1, double n) {
-    return Subtrai<F1, Cte>(f1, n);
+auto operator - (F1 f1, F2 f2) {
+    if constexpr (is_integral_v<F1> || is_floating_point_v<F1>) return Subtrai<Cte, F2>(f1, f2);
+    else if constexpr (is_integral_v<F2> || is_floating_point_v<F2>) return Subtrai<F1, Cte>(f1, f2);
+    else return Subtrai<F1, F2>(f1, f2);
 }
 // Sen
 
@@ -223,6 +190,70 @@ template <typename T>
 Cos<T> cos(T v) {
     return Cos<T>(v);
 }
+// Potenciação
+
+template <typename F1, typename F2>
+class Expoente {
+public:
+    Expoente(F1 f1, F2 f2) : f1(f1), f2(f2) {}
+
+    double e(double v) {
+        return pow(f1.e(v),f2.e(v));
+    }
+
+    double dx(double v) {
+        return f2.e(v) * pow(f1.e(v), f2.e(v)-1) * f1.dx(v);
+    }
+
+private:
+    F1 f1;
+    F2 f2;
+};
+
+template <typename T, typename Int>
+auto operator ->*(T v, Int n) {
+    if constexpr (is_same_v<Int, int>) {
+        return Expoente<T, Cte>(v, Cte(n));
+    }
+    else static_assert("Operador de potenciação definido apenas para inteiros");
+}
+
+/* Recursivo
+template <typename F, typename Int>
+auto operator ->* (F f, Int n) {
+    if constexpr (is_same_v<Int, int>) {
+        if (n == 1) return Multiplica<F,int>(f,1);
+        else {
+            return f * f->*(n - 1);
+        }
+    }
+    else static_assert("Operador de potenciação definido apenas para inteiros");
+}
+*/
+// E^x
+template <typename T>
+class Exp {
+public:
+    Exp(T f1) : f1(f1) {}
+
+    double e(double v) {
+        return exp(f1.e(v));
+    }
+
+    double dx(double v) {
+        return exp(f1.e(v)) * f1.dx(v);
+    }
+
+private:
+    T f1;
+};
+
+template <typename T>
+Exp<T> exp(T v) {
+    return Exp<T>(v);
+}
+
+
 
 X x;
 Cte c;
@@ -239,9 +270,11 @@ int main() {
     auto f2 = x * x * (x + 8.0) + x;
     auto f3 = sin(x * x * cos(3.14 * x + 1.0));
     auto f4 = sin(x * x - cos(3.14 * x + 1.0));
-    double v = 3.14159;
-    auto f = sin(x) / cos(x);
-    cout << f.e(v) << endl;
+    auto f5 = sin(x) / cos(x);
+    auto f6 = x->*3 + x->*2;
+    double v = 0.1;
+    auto f8 = 1 / (1 + exp(-2 * (x - 1)->*4));
+    cout << f8.e(v)  << " " << f8.dx(v) << endl;
 
     return 0;
 }
