@@ -12,7 +12,7 @@ auto bind(F f, Arg... args) {
         return invoke(f,args...);
     }
     else {
-        return [f, args...](auto... arg) { return invoke(f, args..., arg...); };
+        return [f, args...](auto... arg) { return ::bind(f, args..., arg...); };
     }
 }
 
