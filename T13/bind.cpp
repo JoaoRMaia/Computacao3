@@ -18,7 +18,7 @@ auto bind(F f, Arg... args) {
 
 template <typename F>
 auto bind(F f) {
-    return [f](auto arg) { return ::bind(f, arg); };
+    return [f](auto... arg) { return ::bind(f, arg...); };
 }
 
 #ifdef NDEBUG
@@ -52,11 +52,10 @@ int main() {
 
     using ::bind;
 
-    auto f2 = bind(mdc);
-    auto f1 = bind(f2, 12);
+    MMC mmc;
+    auto f1 = bind(mmc, 6);
     for (int i = 2; i <= 12; i++)
         cout << f1(i) << " ";
-
     return 0;
 }
 
