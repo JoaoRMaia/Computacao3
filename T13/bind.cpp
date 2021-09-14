@@ -1,19 +1,24 @@
 #include <iostream>
 #include <algorithm>
 #include <array>
+#include <type_traits>
+#include <functional>
 
 using namespace std;
 
+template <typename F, typename... Arg>
+auto bind(F f, Arg... args) {
+    if constexpr (is_invocable_v<F, Arg...>) {
+        return invoke(f,args...);
+    }
+    else {
+        return [f, args...](auto... arg) { return invoke(f, args..., arg...); };
+    }
+}
 
 template <typename F>
 auto bind(F f) {
-    return f;
-}
-
-template <typename F, typename ...Arg>
-auto bind(F f, Arg... args) {
-    auto func = [f, args...](auto arg) { return f(args..., arg); };
-    return func;
+    return [f](auto arg) { return ::bind(f, arg); };
 }
 
 #ifdef NDEBUG
@@ -45,13 +50,12 @@ string ordena(string a, string b, string c, string d, string e, string f, string
 
 int main() {
 
-    //using ::bind;
+    using ::bind;
 
     auto f2 = bind(mdc);
-    auto f1 = f2(18);
-    for (int i = 2; i <= 18; i++)
+    auto f1 = bind(f2, 12);
+    for (int i = 2; i <= 12; i++)
         cout << f1(i) << " ";
-
 
     return 0;
 }
