@@ -1,25 +1,73 @@
 #include <iostream>
 #include <cmath>
 #include <type_traits>
+#include <vector>
+#include <algorithm>
+#include <functional>
+#include <iterator>
 #include <string>
-#include <sstream>
+#include <map>
 
 using namespace std;
+
+
+template <typename T, typename F>
+auto operator |( T& v, F func) {
+
+    if constexpr (is_same_v<invoke_result_t<F,decltype(*std::begin(v))>, void>) {
+        for (auto e : v) {
+            func(e);
+        }
+    }
+    else if constexpr (is_same_v<invoke_result_t<F, decltype(*std::begin(v))>, bool>) {
+        auto f = *std::begin(v);
+        vector<decltype(f)> r;
+        for (auto e : v) {
+            if (invoke(func, e)) {
+                r.push_back(e);
+            }
+        }
+        return r;
+    }
+    else {
+        auto f = *std::begin(v);
+        vector<invoke_result_t<F,decltype(f)>> r;
+        for (auto e : v) {
+            r.push_back(invoke(func,e));
+        }
+        return r;
+    }
+}
+
+
+template <typename T, int n, typename F>
+auto operator |( T(&v)[n], F func) {
+    if constexpr (is_same_v<invoke_result_t<F, T>, bool>) {
+
+        vector<T> r;
+        for (int i = 0; i < n; i++) {
+            if (func(v[i]))
+                r.push_back(v[i]);
+        }
+        return r;
+    }
+    else {
+
+        for_each(v, v + n, func);
+        return v;
+    }
+
+}
+
 
 // X
 
 class X {
 public:
-    string str() const {
-        return "(x)";
-    }
-    string dx_str() const {
-        return "(1)";
-    }
-    double e(double v) const {
+    double e(double v) {
         return v;
     }
-    double dx(double x) const {
+    double dx(double x) {
         return 1;
     }
 };
@@ -30,49 +78,29 @@ public:
         c = 0;
     }
     Cte(double c) : c(c) {}
-    string str() const {
-        stringstream ss;
-        ss << "(" << c << ")";
-        return ss.str();
-    }
-    string dx_str() const {
-        stringstream ss;
-        ss << "(" << 0 << ")";
-        return ss.str();
-    }
-    double e(double v) const {
+    double e(double v) {
         return c;
     }
 
-    double dx(double x) const {
+    double dx(double x) {
         return 0;
     }
 
 private:
     double c;
 };
-
 // Multiplicação
+
 template <typename F1, typename F2>
 class Multiplica {
 public:
     Multiplica(F1 f1, F2 f2) : f1(f1), f2(f2) {}
-    string str() const {
-        stringstream ss;
-        ss << "(" << f1.str() << "*" << f2.str() << ")";
-        return ss.str();
-    }
-    string dx_str() const {
-        stringstream ss;
-        ss << "(" << f1.dx_str() << "*" << f2.str() << "+" << f1.str() << "*" << f2.dx_str() << ")";
-        return ss.str();
-    }
 
-    double e(double v) const {
+    double e(double v) {
         return f1.e(v) * f2.e(v);
     }
 
-    double dx(double v) const {
+    double dx(double v) {
         return f1.e(v) * f2.dx(v) + f1.dx(v) * f2.e(v);
     }
 
@@ -96,23 +124,13 @@ template <typename F1, typename F2>
 class Divide {
 public:
     Divide(F1 f1, F2 f2) : f1(f1), f2(f2) {}
-    string str() const {
-        stringstream ss;
-        ss << "(" << f1.str() << ")/(" << f2.str() << ")";
-        return ss.str();
-    }
-    string dx_str() const {
-        stringstream ss;
-        ss << "(" << f1.dx_str() << "*" << f2.str() << "-" << f1.str() << "*" << f2.dx_str() << ")/(" << f2.str() << ")^2";
-        return ss.str();
-    }
 
-    double e(double v) const {
+    double e(double v) {
         return f1.e(v) / f2.e(v);
     }
 
-    double dx(double v) const {
-        return (f1.dx(v) * f2.e(v) - f1.e(v) * f2.dx(v)) / (f2.e(v) * f2.e(v));
+    double dx(double v) {
+        return (f1.dx(v) * f2.e(v) - f1.e(v) * f2.dx(v)) / (f2.e(v) * f2.e(v)) ;
     }
 
 private:
@@ -133,12 +151,6 @@ template <typename F1, typename F2>
 class Soma {
 public:
     Soma(F1 f1, F2 f2) : f1(f1), f2(f2) {}
-    string str() const {
-        return "(" + f1.str() + "+" + f2.str() + ")";
-    }
-    string dx_str() const {
-        return "(" + f1.dx_str() + "+" + f2.dx_str() + ")";
-    }
 
     double e(double v) {
         return f1.e(v) + f2.e(v);
@@ -166,14 +178,12 @@ template <typename F1, typename F2>
 class Subtrai {
 public:
     Subtrai(F1 f1, F2 f2) : f1(f1), f2(f2) {}
-    string str() const { return "(" + f1.str() + "-" + f2.str() + ")"; }
-    string dx_str() const { return "(" + f1.dx_str() + "-" + f2.dx_str() + ")"; }
 
-    double e(double v) const {
+    double e(double v) {
         return f1.e(v) - f2.e(v);
     }
 
-    double dx(double v) const {
+    double dx(double v) {
         return f1.dx(v) - f2.dx(v);
     }
 
@@ -195,16 +205,6 @@ template <typename T>
 class Seno {
 public:
     Seno(T f1) : f1(f1) {}
-    string str() const {
-        stringstream ss;
-        ss << "(sin(" << f1.str() << "))";
-        return ss.str();
-    }
-    string dx_str() const {
-        stringstream ss;
-        ss << "(cos(" << f1.str() << ")*" << f1.dx_str() << ")";
-        return ss.str();
-    }
 
     double e(double v) {
         return sin(f1.e(v));
@@ -227,24 +227,13 @@ template <typename T>
 class Cos {
 public:
     Cos(T f1) : f1(f1) {}
-    string str() const {
-
-        stringstream ss;
-        ss << "cos(" << f1.str() << ")";
-        return ss.str();
-    }
-    string dx_str() const {
-        stringstream ss;
-        ss << "(-sin(" << f1.str() << ")*" << f1.dx_str() << ")";
-        return ss.str();
-    }
 
     double e(double v) {
         return cos(f1.e(v));
     }
 
     double dx(double v) {
-        return -sin(f1.e(v)) * f1.dx(v);
+        return -sin(f1.e(v))*f1.dx(v);
     }
 
 private:
@@ -255,30 +244,21 @@ template <typename T>
 Cos<T> cos(T v) {
     return Cos<T>(v);
 }
-
 // Potenciação
+
 template <typename F1, typename F2>
 class Expoente {
 public:
     Expoente(F1 f1, F2 f2) : f1(f1), f2(f2) {}
-    string str() const {
-        stringstream ss;
-        ss << "((" << f1.str() << ")^(" << f2.str() << "))";
-        return ss.str();
-    }
-    string dx_str() const {
-        stringstream ss;
-        ss << "((" << f2.str() << ")*(" << f1.dx_str() << ")*(" << f1.str() << ")^(" << f2.e(1)-1 << "))";
-        return ss.str();
-    }
 
     double e(double v) {
-        return pow(f1.e(v), f2.e(v));
+        return pow(f1.e(v),f2.e(v));
     }
 
     double dx(double v) {
-        return f2.e(v) * pow(f1.e(v), f2.e(v) - 1) * f1.dx(v);
+        return f2.e(v) * pow(f1.e(v), f2.e(v)-1) * f1.dx(v);
     }
+
 private:
     F1 f1;
     F2 f2;
@@ -289,37 +269,14 @@ auto operator ->*(T v, Int n) {
     if constexpr (is_same_v<Int, int>) {
         return Expoente<T, Cte>(v, Cte(n));
     }
-    else static_assert(is_same_v<Int, int>, "Operador de potenciação definido apenas para inteiros");
+    else static_assert(is_same_v<Int, int>,"Operador de potenciação definido apenas para inteiros");
 }
 
-/* Recursivo
-template <typename F, typename Int>
-auto operator ->* (F f, Int n) {
-    if constexpr (is_same_v<Int, int>) {
-        if (n == 1) return Multiplica<F,int>(f,1);
-        else {
-            return f * f->*(n - 1);
-        }
-    }
-    else static_assert("Operador de potenciação definido apenas para inteiros");
-}
-*/
 // E^x
 template <typename T>
 class Exp {
 public:
     Exp(T f1) : f1(f1) {}
-
-    string str() const {
-        stringstream ss;
-        ss << "exp(" << f1.str() << ")";
-        return ss.str();
-    }
-    string dx_str() const {
-        stringstream ss;
-        ss << "(" << "exp(" << f1.str() << "))*(" << f1.dx_str() << ")";
-        return ss.str();
-    }
 
     double e(double v) {
         return exp(f1.e(v));
@@ -344,23 +301,12 @@ class Log {
 public:
     Log(T f1) : f1(f1) {}
 
-    string str() const {
-        stringstream ss;
-        ss << "log(" << f1.str() << ")";
-        return ss.str();
-    }
-    string dx_str() const {
-        stringstream ss;
-        ss << "1/(" << f1.str() << "*" << f1.dx_str() << ")";
-        return ss.str();
-    }
-
     double e(double v) {
         return log(f1.e(v));
     }
 
     double dx(double v) {
-        return 1 / f1.e(v) * f1.dx(v);
+        return 1/f1.e(v) * f1.dx(v);
     }
 
 private:
@@ -389,13 +335,13 @@ int main() {
     auto f3 = sin(x * x * cos(3.14 * x + 1.0));
     auto f4 = sin(x * x - cos(3.14 * x + 1.0));
     auto f5 = sin(x) / cos(x);
-    auto f6 = (7.0 * x + 5.0)->*3;
-    auto f8 = 1.0 / (sin(x)->*2 + cos(x)->*2)->*4;
-    auto f9 = exp(x * log(x - 8.0) + 1.0);
+    auto f6 = x->*3 + x->*2;
+    auto f8 = 1 / (1 + exp(-2 * (x - 1)->*4));
+    auto f9 = exp(x * log(x));
     double v = 3;
-    //auto f10 = x->*1.1;
+    auto f10 = x->*1.1;
 
-    cout << "f(x) = " << f8.str() << ", f'(x) = " << f8.dx_str() << endl;
+    cout << f9.e(v) << " " << f9.dx(v) << endl;
 
 
     return 0;
